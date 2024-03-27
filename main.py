@@ -7,6 +7,8 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
+import helper
+
 # If modifying these scopes, delete the file token.json.
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
@@ -36,32 +38,22 @@ def main():
 
         
     try:
-        service = build("calendar", "v3", credentials=creds)
+        service = helper.get_service(creds)
+
+        calendar_id = "190b48c9901f71f99bd0f617feaf517ade09b1590859f2b26199fb845e678f62@group.calendar.google.com"
 
         # Call the Calendar API
-        now = datetime.datetime.utcnow().isoformat() + "Z"  # 'Z' indicates UTC time
-        print("Getting the upcoming 10 events")
-        events_result = (
-            service.events()
-            .list(
-                calendarId="71egq5ct4ug4uoa00q52r6ndbo@group.calendar.google.com",
-                timeMin=now,
-                maxResults=20,
-                singleEvents=True,
-                orderBy="startTime",
-            )
-            .execute()
-        )
-        events = events_result.get("items", [])
+        current_date = datetime.datetime.utcnow().isoformat() + "Z"  # 'Z' indicates UTC time
 
-        if not events:
-            print("No upcoming events found.")
-            return
+        availability = helper.get_free_times(service, calendar_id, current_date, days=4)
 
-        # Prints the start and name of the next 10 events
-        for event in events:
-            start = event["start"].get("dateTime", event["start"].get("date"))
-            print(start, event["summary"])
+        for date in availability:
+            print (f'Times on {date}:')
+            for time in availability[date]:
+                print (time)
+
+            print ()
+
 
     except HttpError as error:
         print(f"An error occurred: {error}")
