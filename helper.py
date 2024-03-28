@@ -12,9 +12,14 @@ def get_service(credentials):
     return service
 
 def get_events(service, calendar_id, current_date, days=14):
-    # Calculate the end time as now plus x days
-    end_time = datetime.datetime.utcnow() + datetime.timedelta(days=days)
-    end_time_iso = end_time.isoformat() + "Z"
+
+    # Convert the string to a datetime object
+    current_date = datetime.datetime.strptime(current_date, "%Y-%m-%dT%H:%M:%SZ")
+
+    end_time = current_date + datetime.timedelta(days=days)
+
+    # Format the new datetime object back to the original string format
+    end_time_iso = end_time.strftime("%Y-%m-%dT%H:%M:%SZ")
 
     # Call the Calendar API
     events_result = (

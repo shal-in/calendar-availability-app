@@ -83,7 +83,11 @@ ipython_config.py
 
 credentials.json
 token.json
+calendar_id.txt
 
 test.ipynb
 
-events.txt
+templates/
+
+index.js
+
