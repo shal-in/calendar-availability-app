@@ -48,8 +48,8 @@ app = Flask(__name__)
 def home():
     return 'Home'
 
-@app.route('/api/tutoring-availability', methods = ['POST'])
-def test():
+@app.route('/api/tutoring-availability/get', methods = ['POST'])
+def get_tutoring_availability():
     data = request.get_json()
 
     start_str = data['start_date']
@@ -60,9 +60,36 @@ def test():
 
     return jsonify(availability), 200
 
+@app.route('/api/tutoring-availability/create', methods = ['POST'])
+def create_tutoring_event():
+    data = request.get_json()
 
+    summary = data['summary']
+    date = data['date']
+    start = data['start']
+    end = data['end']
 
+    if 'description' in data:
+        description = data['description']
+    else:
+        description = False
+
+    if 'location' in data:
+        location = data['location']
+    else:
+        location = False
+
+    service = helper.get_service(creds)
+
+    event = helper.create_event(service, calendar_id, summary, date, start, end, description, location)
+
+    if event:
+        return event['summary'], 200
+    
+    else:
+        return 400
 
 if __name__ == '__main__':
     # Run the Flask app
     app.run(host='0.0.0.0', port=2020, debug=True)
+

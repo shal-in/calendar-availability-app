@@ -8,6 +8,7 @@ import datetime
 
 
 
+
 def convert_date_to_iso_format(date_str):
     # Parse the input date string
     date_obj = datetime.datetime.strptime(date_str, "%Y-%m-%d")
@@ -115,3 +116,31 @@ def get_availability(service, calendar_id, start_date_str, days):
     events = get_events(service, calendar_id, start_date_str, days)
 
     return get_tutoring_windows(events)
+
+
+def create_event(service, calendar_id, summary, date, start, end, description=False, location = False):
+    start_time = date + 'T' + start + 'Z'
+    end_time = date + 'T' + end + 'Z'
+
+    event = {
+        'summary': summary,
+        'start': {
+            'dateTime': start_time,
+            'timeZone': 'Europe/London'
+        },
+        'end': {
+            'dateTime': end_time,
+            'timeZone': 'Europe/London'
+        },
+        'colorId': 9,
+    }
+
+    if description:
+        event['description'] = description
+
+    if location:
+        event['location'] = location
+
+    event = service.events().insert(calendarId=calendar_id, body=event).execute()
+
+    return event
