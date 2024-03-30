@@ -1,6 +1,7 @@
-from flask import Flask, jsonify, render_template, request
 import datetime
 import os.path
+
+from flask import Flask, jsonify, render_template, request
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -10,6 +11,7 @@ from googleapiclient.errors import HttpError
 
 import helper
 
+# If modifying these scopes, delete the file token.json.
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
 creds = None
@@ -31,6 +33,13 @@ if not creds or not creds.valid:
     with open("token.json", "w") as token:
         token.write(creds.to_json())
 
+with open("calendar_id.txt", "r") as file:
+    calendar_id = file.read().strip()
+
+
+
+
+
 
 
 app = Flask(__name__)
@@ -39,56 +48,21 @@ app = Flask(__name__)
 def home():
     return 'Home'
 
-@app.route('/api/test/<variable>')
-def test(variable):
-    print (variable)
-
-    payload = {
-        'message': 'request received',
-        'variable': variable
-    }
-
-    extra = request.args.get('extra')
-    if extra:
-        payload['extra'] = extra
-    
-    more = request.args.get('more')
-    if more:
-        payload['more'] = more
-
-    return jsonify(payload), 200
-
-
-@app.route('/api/test/post', methods=['POST'])
-def create_user():
+@app.route('/api/tutoring-availability', methods = ['POST'])
+def test():
     data = request.get_json()
 
-    data['response'] = "success"
-
-    return jsonify(data), 201
-
-@app.route('/api/tutoring-availability', methods=['POST'])
-def get_events():
-    data = request.get_json()
+    start_str = data['start_date']
+    days = data['days']
 
     service = helper.get_service(creds)
+    availability = helper.get_availability(service, calendar_id, start_str, days)
 
-    with open("calendar_id.txt", "r") as file:
-        calendar_id = file.read().strip()
-
-    # Call the Calendar API
-    date = data['date']     
-    current_date = datetime.datetime.strptime(date, "%Y-%m-%d").isoformat() + "Z"
+    return jsonify(availability), 200
 
 
-    print (current_date)
-
-    availability = helper.get_free_times(service, calendar_id, current_date, days=4)
-    
-    return jsonify(availability), 201
 
 
 if __name__ == '__main__':
     # Run the Flask app
     app.run(host='0.0.0.0', port=2020, debug=True)
-    
