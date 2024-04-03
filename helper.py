@@ -38,6 +38,16 @@ def get_date_string(current_str='today', days=0):
     
     return formatted_date
 
+def remove_seconds(time_str):
+    # Split the time string by ':'
+    time_parts = time_str.split(':')
+    
+    # Join the first two parts (hours and minutes) with ':'
+    time_without_seconds = ':'.join(time_parts[:2])
+    
+    return time_without_seconds
+
+
 
 def get_service(credentials):
     service = build("calendar", "v3", credentials=credentials)
@@ -112,11 +122,54 @@ def get_tutoring_windows(events):
     return availability
 
 
-def get_availability(service, calendar_id, start_date_str, days):
+def get_free_times(availability, duration):
+    free_times = {}
+    for date in availability:
+        times = availability[date]
+
+        daily_times = []
+        for time_str in times:
+            start_time_str = time_str + 'Z'
+
+            start_time = datetime.datetime.strptime(start_time_str, '%H:%M:%S%z')
+            end_time = start_time + datetime.timedelta(hours=duration)
+            end_time_str = end_time.strftime('%H:%M:%S%z')
+
+            current_time = start_time
+            valid_start = True
+            while current_time < end_time:
+                current_time_str = current_time.strftime('%H:%M:%S')
+
+                if current_time_str not in times:
+                    valid_start = False
+                    break
+
+                current_time += datetime.timedelta(minutes=30)
+
+            if valid_start:
+                start_time_str = start_time_str.split('Z')[0]
+                end_time_str = end_time_str.split('Z')[0]
+
+                start_time_str = remove_seconds(start_time_str)
+                end_time_str = remove_seconds(end_time_str)
+
+                string = f'{start_time_str}-{end_time_str}'
+                daily_times.append(string)
+        
+        free_times[date] = daily_times
+        
+    return free_times
+
+
+def get_availability(service, calendar_id, start_date_str, days, duration):
     events = get_events(service, calendar_id, start_date_str, days)
 
-    return get_tutoring_windows(events)
+    availability = get_tutoring_windows(events)
 
+    free_times = get_free_times(availability, duration)
+
+
+    return free_times
 
 def create_event(service, calendar_id, summary, date, start, end, description=False, location = False):
     start_time = date + 'T' + start + 'Z'

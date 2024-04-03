@@ -2,6 +2,7 @@ import datetime
 import os.path
 
 from flask import Flask, jsonify, render_template, request
+from flask_cors import CORS
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -43,6 +44,7 @@ with open("calendar_id.txt", "r") as file:
 
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
 @app.route('/')
 def home():
@@ -53,10 +55,11 @@ def get_tutoring_availability():
     data = request.get_json()
 
     start_str = data['start_date']
-    days = data['days']
+    days = int(data['days'])
+    duration = float(data['duration'])
 
     service = helper.get_service(creds)
-    availability = helper.get_availability(service, calendar_id, start_str, days)
+    availability = helper.get_availability(service, calendar_id, start_str, days, duration)
 
     return jsonify(availability), 200
 
